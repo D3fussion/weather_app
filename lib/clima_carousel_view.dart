@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:weather_icons/weather_icons.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart'; 
 
 class ClimaCarouselView extends StatefulWidget {
   final Future<List<Map<String, dynamic>>> ciudadesGuardadas;
@@ -14,9 +14,8 @@ class ClimaCarouselView extends StatefulWidget {
   State<ClimaCarouselView> createState() => _ClimaCarouselViewState();
 }
 class _ClimaCarouselViewState extends State<ClimaCarouselView> {
-  int _currentIndex = 0; // Índice de la página actual en el PageView
+  int _currentIndex = 0; 
 
-  // Mapa de íconos del clima
   IconData _obtenerIconoClima(int simbolo) {
     switch (simbolo) {
       case 0:
@@ -80,7 +79,6 @@ class _ClimaCarouselViewState extends State<ClimaCarouselView> {
     return FutureBuilder<List<Map<String, dynamic>>>(
       future: widget.ciudadesGuardadas,
       builder: (context, snapshot) {
-        // Mostrar 'Loading' mientras se cargan los datos
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Container(
             decoration: BoxDecoration(
@@ -95,7 +93,6 @@ class _ClimaCarouselViewState extends State<ClimaCarouselView> {
             ),
           );
         }
-        // Manejar errores
         if (snapshot.hasError) {
           return Container(
             decoration: BoxDecoration(
@@ -128,7 +125,6 @@ class _ClimaCarouselViewState extends State<ClimaCarouselView> {
             ),
           );
         }
-        // Acceder a la lista de ciudades
         final ciudades = snapshot.data ?? [];
         if (ciudades.isEmpty) {
           return Container(
@@ -158,149 +154,156 @@ class _ClimaCarouselViewState extends State<ClimaCarouselView> {
             ),
           );
         }
-        // Mostrar el Carousel de ciudades
         return _buildCarousel(ciudades);
       },
     );
   }
 
-Widget _buildCarousel(List<Map<String, dynamic>> ciudades) {
-  return Stack(
-    children: [
-      // CarouselView aquí
-      CarouselView(
-        itemExtent: MediaQuery.of(context).size.width,
-        shrinkExtent: MediaQuery.of(context).size.width,
-        onTap: (index) {
-          widget.actualizaClima(ciudades[index]);
-        },
-        children: List.generate(
-          ciudades.length,
-          (index) {
-            final ciudad = ciudades[index];
-            return _buildCiudadCard(ciudad);
-          },
-        ),
-      ),
-      Positioned(
-        top:50,
-        right:20,
-        child: IconButton(
-          icon: Icon(Icons.refresh, color: Colors.white,),
-          onPressed: () {
-            if (_currentIndex < ciudades.length) {
-              widget.actualizaClima(ciudades[_currentIndex]);
-            }
-          },
-        ),
-      )
-    ]
-  ); // Implementación del carrusel aquí
-}
-Widget _buildCiudadCard(Map<String, dynamic> ciudad) {
-  final temperatura = ciudad['temperatura'] ?? 0.0;
-  final simoboloClima = ciudad['simbolo_clima'] ?? 0;
-  final velocidadViento = ciudad['velocidad_viento'] ?? 0.0;
-  final nombre = ciudad['nombre'] ?? 'Desconocido';
-  final ultimaActualizacion = ciudad['ultima_actualizacion'] ?? '';
-  return Container(
-    decoration: BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [Colors.blue.shade400, Colors.blue.shade700],
-      ),
-    ),
-    child: SafeArea(
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Nombre de la ciudad
-            Text(
-              nombre,
-              style: TextStyle(color: Colors.white, fontSize: 24),
-            ),
-            const SizedBox(height: 10),
-            // Icono del clima
-            Icon(
-              _obtenerIconoClima(simoboloClima),
-              color: Colors.white,
-              size: 120,
-            ),
-            const SizedBox(height: 10),
-            // Temperatura
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  '${temperatura.toStringAsFixed(1)}',
-                  style: TextStyle(color: Colors.white, fontSize: 80, fontWeight: FontWeight.w200),
-                ),
-                const Padding(
-                  padding: EdgeInsets.only(top: 8),
-                  child: Text(
-                    '°C',
-                    style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w300),
+  Widget _buildCarousel(List<Map<String, dynamic>> ciudades) {
+    return Column(
+      children: [
+        Expanded(
+          child: PageView.builder(
+            itemCount: ciudades.length,
+            onPageChanged: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+              widget.actualizaClima(ciudades[index]);
+            },
+            itemBuilder: (context, index) {
+              final ciudad = ciudades[index];
+              final temperatura = ciudad['temperatura']?.toStringAsFixed(1) ?? '--';
+              final viento = ciudad['velocidad_viento']?.toStringAsFixed(1) ?? '--';
+              final simbolo = ciudad['simbolo_clima'] ?? 0;
+              final nombre = ciudad['nombre'] ?? 'Ciudad desconocida';
+              final ultimaActualizacion = ciudad['ultima_actualizacion'] ?? '';
+              
+              return Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.blue.shade400, Colors.blue.shade700],
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            // Descripción del clima
-            Text(
-              _obtenerDescripcionClima(simoboloClima),
-              style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w300),
-            ),
-            const SizedBox(height: 5),
-            // Información adicional (viento, última actualización)
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildInfoItem(
-                    Icons.air,
-                    '${velocidadViento.toStringAsFixed(1)} m/s','Viento',
+                child: SafeArea(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Text(
+                        nombre,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      
+                      Icon(
+                        _obtenerIconoClima(simbolo),
+                        size: 120,
+                        color: Colors.white,
+                      ),
+                      
+                      Text(
+                        '$temperatura°C',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 72,
+                          fontWeight: FontWeight.w300,
+                        ),
+                      ),
+                      
+                      Text(
+                        _obtenerDescripcionClima(simbolo),
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 24,
+                        ),
+                      ),
+                      
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 40),
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            Column(
+                              children: [
+                                const Icon(Icons.air, color: Colors.white, size: 30),
+                                const SizedBox(height: 8),
+                                Text(
+                                  '$viento m/s',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const Text(
+                                  'Viento',
+                                  style: TextStyle(color: Colors.white70, fontSize: 14),
+                                ),
+                              ],
+                            ),
+                            Column(
+                              children: [
+                                const Icon(Icons.access_time, color: Colors.white, size: 30),
+                                const SizedBox(height: 8),
+                                Text(
+                                  _formatearHora(ultimaActualizacion),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const Text(
+                                  'Actualizado',
+                                  style: TextStyle(color: Colors.white70, fontSize: 14),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  _buildInfoItem(
-                    Icons.access_time,
-                    _formatearHora(ultimaActualizacion),
-                    'Última actualización',
-                  ),
-                ],
+                ),
+              );
+            },
+          ),
+        ),
+        
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              ciudades.length,
+              (index) => Container(
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                width: _currentIndex == index ? 12 : 8,
+                height: _currentIndex == index ? 12 : 8,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _currentIndex == index 
+                      ? Colors.white 
+                      : Colors.white.withOpacity(0.4),
+                ),
               ),
             ),
-            const SizedBox(height: 10),
-            
-          ],
-        ),
-      ),
-    ),
-  );
-}
-Widget _buildInfoItem(IconData icon, String value, String label) {
-  return Column(
-    children: [
-      Icon(icon, color: Colors.white70, size: 28),
-      const SizedBox(height: 8),
-      Text(
-        value,
-        style: const TextStyle(
-          color: Colors.white, 
-          fontSize: 18,
-          fontWeight: FontWeight.w500,
           ),
+        ),
+      ],
+    );
+  }
 
-      ),
-      Text(
-        label,
-        style: const TextStyle(
-          color: Colors.white60, 
-          fontSize: 14),
-          
-      ),
-    ],
-  );
-}
+
 }
